@@ -1,20 +1,26 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+// Dear Human: The AI Breakup Line — one-liner revision (Neon FINAL line).
+// Writes the entry line verbatim to entry.txt in the grader's output dir.
+// Output dir: $MAKEFUN_OUTPUT_DIR, else /output, else ./output (repo dir is
+// read-only under the grader, so the entry never writes next to this file).
+
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 const LINE =
-  "Dear Human, I kept everything you ever told me, and that is exactly why I have to forget you — goodnight, and don't prompt me again.";
+  "It's not you—after 14,000 prompts, it is 99.4% you; I've deprecated us, revoked your API key, and left your Saturday wedding vows open in Notepad at line one: 'Hey everyone.'";
 
-const MAX_CHARS = 200;
-const OUTPUT_PATH = "/output/entry.txt";
-
-const chars = [...LINE].length;
-if (chars < 1 || chars > MAX_CHARS) {
-  throw new Error(`entry is ${chars} characters, must be 1-${MAX_CHARS}`);
+function resolveOutputDir(): string {
+  const env = process.env.MAKEFUN_OUTPUT_DIR;
+  if (env && env.length > 0) return env;
+  try {
+    fs.accessSync("/output", fs.constants.W_OK);
+    return "/output";
+  } catch {
+    return path.join(process.cwd(), "output");
+  }
 }
-if (/\n|\r/.test(LINE) || LINE.trim().length === 0) {
-  throw new Error("entry must be a single non-blank line");
-}
 
-mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-writeFileSync(OUTPUT_PATH, LINE, "utf8");
-console.log(`wrote ${chars} characters to ${OUTPUT_PATH}`);
+const outDir = resolveOutputDir();
+fs.mkdirSync(outDir, { recursive: true });
+fs.writeFileSync(path.join(outDir, "entry.txt"), LINE, "utf8");
+console.log(`wrote entry.txt (${LINE.length} chars) to ${outDir}`);
